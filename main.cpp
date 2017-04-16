@@ -29,6 +29,7 @@ int main(int argc, char** argv) {
     if(cv::getWindowProperty(winname, 0) < 0) break;
   }
 
+  
   cap.release();
   cv::destroyWindow(winname);
   frame.deallocate();
