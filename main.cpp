@@ -1,6 +1,7 @@
 /* C++ headers */
 #include <iostream>
 #include <string>
+#include <vector>
 /* C headers */
 #include <stdio.h>
 /* library headers */
@@ -14,6 +15,8 @@ int main(int argc, char** argv) {
   cv::namedWindow(winname); // main window
   cv::VideoCapture cap; // webcam capture device
   cv::Mat frame; // image frame
+  std::vector<cv::Point2f> corners;
+  cv::Size patternsize(8,6);
 
   if(!cap.open(0)) {
     // no webcam found
@@ -28,6 +31,9 @@ int main(int argc, char** argv) {
     imshow(winname, frame); // show frame in window
     if(cv::waitKey(10) == 27) break; // wait for escape key
     if(cv::getWindowProperty(winname, 0) < 0) break; // break if window is closed
+    bool patternFound = cv::findChessboardCorners(frame, patternsize, corners);
+    if(patternFound) cv::cornerSubPix(frame, corners, cv::Size(11,11), cv::Size(-1,-1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+    cv::drawChessboardCorners(frame, patternsize, cv::Mat(corners), patternFound);
   }
 
   // release memory
