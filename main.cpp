@@ -6,7 +6,6 @@
 /* library headers */
 #include <opencv2/opencv.hpp>
 
-
 /* Global variables */
 std::string winname = "Window";
 
@@ -24,6 +23,7 @@ int main(int argc, char** argv) {
   for (;;) {
     cap >> frame;
     if(frame.empty()) break;
+    cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     imshow(winname, frame);
     if(cv::waitKey(10) == 27) break;
     if(cv::getWindowProperty(winname, 0) < 0) break;
