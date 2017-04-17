@@ -64,7 +64,15 @@ int main(int argc, char** argv) {
     std::vector<std::vector<cv::Point> > contours;
     cv::findContours(thresh, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
     cv::Scalar color(0,255,0);
-    cv::drawContours(frame, contours, -1, color);
+    std::vector<std::vector<cv::Point> > squares;
+    for(auto contour : contours) {
+      std::vector<cv::Point> approx;
+      cv::approxPolyDP(contour, approx, cv::arcLength(cv::Mat(contour), true)*0.02, true);
+      if(approx.size() == 4 && fabs(cv::contourArea(cv::Mat(approx))) > 1000 && cv::isContourConvex(cv::Mat(approx))) {
+        squares.push_back(approx);
+      }
+    }
+    cv::drawContours(frame, squares, -1, color);
     imshow(winname, frame);
     if(cv::waitKey(10) == 27) break; // break on escape key pressed
     if(cv::getWindowProperty(winname, 0) < 0) break; // break if window is closed
