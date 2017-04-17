@@ -17,6 +17,8 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
+// http://www.jera.com/jbrewer/2014/01/computer-vision-challenge-1-augmented-reality.html
+
 /* Global variables */
 std::string winname = "Window";
 
