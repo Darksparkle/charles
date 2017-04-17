@@ -19,7 +19,6 @@
 
 /* Global variables */
 std::string winname = "Window";
-std::ofstream file;
 
 const int win_width = 800;
 const int win_height = 640;
@@ -37,6 +36,17 @@ int main(int argc, char** argv) {
   cv::namedWindow(winname, cv::WINDOW_OPENGL);
   cv::resizeWindow(winname, win_width, win_height);
 
+  cv::VideoCapture cap; // webcam capture device
+
+  cv::Mat frame; // image frame
+  cv::Mat gray; // gray frame
+  cv::Mat thresh;
+  cv::Mat blur;
+
+  cv::Scalar   red(255, 0, 0);
+  cv::Scalar green(0, 255, 0);
+  cv::Scalar  blue(0, 0, 255);
+
   cv::FileStorage fs("data.xml", cv::FileStorage::READ);
   cv::Mat intrinsics, distortion;
   fs["Camera_Matrix"] >> intrinsics;
@@ -46,15 +56,6 @@ int main(int argc, char** argv) {
     std::cout << "Run calibration (in ../calibrate/) first!" << '\n';
     return 1;
   }
-
-  cv::VideoCapture cap; // webcam capture device
-
-  cv::Mat frame; // image frame
-  cv::Mat gray; // gray frame
-  cv::Mat thresh;
-  cv::Mat blur;
-
-  file.open("points");
 
   if (!cap.open(0)) {
     // no webcam found
@@ -72,8 +73,6 @@ int main(int argc, char** argv) {
 
     std::vector<std::vector<cv::Point> > contours;
     cv::findContours(thresh, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
-
-    cv::Scalar color(0,255,0);
 
     std::vector<cv::Mat> squares;
     for(auto contour : contours) {
@@ -98,7 +97,14 @@ int main(int argc, char** argv) {
 
       std::cout << "rvec: " << rvec << '\n' << "tvec: " << tvec << '\n';
 
-      drawQuad(frame, squares[0], color);
+      drawQuad(frame, squares[0], green);
+
+      std::vector<cv::Point3f> line3d = {{0, 0, 0}, {0, 0, 1}};
+      std::vector<cv::Point2f> line2d;
+
+      cv::projectPoints(line3d, rvec, tvec, intrinsics, distortion, line2d);
+      std::cout << "line2d: " << line2d << '\n';
+      cv::line(frame, line2d[0], line2d[1], red);
     }
 
     // cv::drawContours(frame, squares, -1, color);
@@ -116,7 +122,6 @@ int main(int argc, char** argv) {
   cap.release();
   cv::destroyWindow(winname);
   frame.deallocate();
-  file.close();
 
   return 0;
 }
