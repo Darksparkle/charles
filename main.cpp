@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <sstream>
 /* C headers */
 #include <stdio.h>
 /* library headers */
@@ -21,7 +22,16 @@ int main(int argc, char** argv) {
   cv::Mat frame; // image frame
   cv::Mat gray;
   std::vector<cv::Point2f> corners;
-  cv::Size patternsize(6,6);
+  cv::Size patternsize;
+  if(argc > 1) {
+    patternsize = {atoi(argv[1]), atoi(argv[2])};
+  } else {
+    patternsize = {6,6};
+  }
+  bool patternFound;
+
+  cv::Mat intrinsics, distortion;
+  std::vector<cv::Point3f> boardPoints;
 
   file.open("points");
 
@@ -37,12 +47,11 @@ int main(int argc, char** argv) {
     cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY); // convert frame to greyscale
     if(cv::waitKey(10) == 27) break; // wait for escape key
     if(cv::getWindowProperty(winname, 0) < 0) break; // break if window is closed
-    bool patternFound = cv::findChessboardCorners(gray, patternsize, corners, cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);
+    patternFound = cv::findChessboardCorners(gray, patternsize, corners, cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE + cv::CALIB_CB_FAST_CHECK);
     if(patternFound) cv::cornerSubPix(gray, corners, cv::Size(11,11), cv::Size(-1,-1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
     cv::drawChessboardCorners(frame, patternsize, cv::Mat(corners), patternFound);
     if(patternFound) file << corners << '\n' << '\n';
     imshow(winname, frame); // show frame in window
-
   }
 
   // release memory
