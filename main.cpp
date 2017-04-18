@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
 
       drawQuad(frame, squares[0], green);
 
-      std::vector<cv::Point3f> line3d = {{0, 0, 0}, {0, 0, 1}};
+      std::vector<cv::Point3f> line3d = {{0, 0, 0}, {0, 0, -4}};
       std::vector<cv::Point2f> line2d;
 
       cv::projectPoints(line3d, rvec, tvec, intrinsics, distortion, line2d);
