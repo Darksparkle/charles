@@ -39,7 +39,11 @@ void drawQuad(cv::Mat image, cv::Mat points, cv::Scalar color) {
 }
 
 cv::Point3f rotate(cv::Point3f base, std::vector<cv::Point3f> rotation) {
-  cv::Point3f result = {(base.x*rotation[0].x + base.y*rotation[0].y + base.z*rotation[0].z), (base.x*rotation[1].x + base.y*rotation[1].y + base.z*rotation[1].z), (base.x*rotation[2].x + base.y*rotation[2].y + base.z*rotation[2].z)};
+  cv::Point3f result = {
+    (base.x*rotation[0].x + base.y*rotation[0].y + base.z*rotation[0].z),
+    (base.x*rotation[1].x + base.y*rotation[1].y + base.z*rotation[1].z),
+    (base.x*rotation[2].x + base.y*rotation[2].y + base.z*rotation[2].z)
+  };
   return result;
 }
 
