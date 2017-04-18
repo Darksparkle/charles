@@ -6,6 +6,7 @@
 #include <sstream>
 /* C headers */
 #include <stdio.h>
+#include <math.h>
 /* library headers */
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
@@ -22,6 +23,8 @@
 /* Global variables */
 std::string winname = "Window";
 
+float r = 1;
+
 const int win_width = 800;
 const int win_height = 640;
 
@@ -31,6 +34,11 @@ void drawQuad(cv::Mat image, cv::Mat points, cv::Scalar color) {
   cv::line(image, points.at<cv::Point2f>(0,1), points.at<cv::Point2f>(0,2), color);
   cv::line(image, points.at<cv::Point2f>(0,2), points.at<cv::Point2f>(0,3), color);
   cv::line(image, points.at<cv::Point2f>(0,3), points.at<cv::Point2f>(0,0), color);
+}
+
+cv::Point3f rotate(cv::Point3f base, std::vector<cv::Point3f> rotation) {
+  cv::Point3f result = {(base.x*rotation[0].x + base.y*rotation[0].y + base.z*rotation[0].z), (base.x*rotation[1].x + base.y*rotation[1].y + base.z*rotation[1].z), (base.x*rotation[2].x + base.y*rotation[2].y + base.z*rotation[2].z)};
+  return result;
 }
 
 int main(int argc, char** argv) {
@@ -98,6 +106,11 @@ int main(int argc, char** argv) {
       cv::solvePnP(objectPointsMat, squares[0], intrinsics, distortion, rvec, tvec);
 
       std::cout << "rvec: " << rvec << '\n' << "tvec: " << tvec << '\n';
+      std::vector<cv::Point3f> rotz = {
+        {(float)cos(r), (float)-1*sin(r), 0},
+        {(float)sin(r), (float)cos(r), 0},
+        {0, 0, 1}
+      };
 
       drawQuad(frame, squares[0], green);
       // {{0,0,0}, {1,0,0}, {1,1,0}, {0,1,0}, {0,0,0}};
@@ -141,14 +154,17 @@ int main(int argc, char** argv) {
       std::vector<cv::Point2f> line2d[32];
 
       for(int l = 0; l < 32; l++) {
-        cv::projectPoints(tesseract[l], rvec, tvec, intrinsics, distortion, line2d[l]);
+        cv::projectPoints((std::vector<cv::Point3f>){rotate(tesseract[l][0], rotz), rotate(tesseract[l][1], rotz)}, rvec, tvec, intrinsics, distortion, line2d[l]);
         cv::line(frame, line2d[l][0], line2d[l][1], blue);
       }
     }
 
+    // (std::vector<cv::Point3f>){rotate((cv::Point3f)tesseract[l], (cv::Point3f)rotz);
+
     // cv::drawContours(frame, squares, -1, color);
 
     imshow(winname, frame);
+    r+=0.01;
 
     if (cv::waitKey(10) == 27)
       break; // break on escape key pressed
