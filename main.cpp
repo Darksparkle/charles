@@ -18,6 +18,8 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
+#define PI (4*atan(1))
+
 // http://www.jera.com/jbrewer/2014/01/computer-vision-challenge-1-augmented-reality.html
 
 /* Global variables */
@@ -29,7 +31,7 @@ const int win_width = 800;
 const int win_height = 640;
 
 void drawQuad(cv::Mat image, cv::Mat points, cv::Scalar color) {
-  std::cout << points.at<cv::Point2f>(0,0) << " " << points.at<cv::Point2f>(0,2) << " " << points.at<cv::Point2f>(0,3) << '\n';
+  // std::cout << points.at<cv::Point2f>(0,0) << " " << points.at<cv::Point2f>(0,2) << " " << points.at<cv::Point2f>(0,3) << '\n';
   cv::line(image, points.at<cv::Point2f>(0,0), points.at<cv::Point2f>(0,1), color);
   cv::line(image, points.at<cv::Point2f>(0,1), points.at<cv::Point2f>(0,2), color);
   cv::line(image, points.at<cv::Point2f>(0,2), points.at<cv::Point2f>(0,3), color);
@@ -40,6 +42,45 @@ cv::Point3f rotate(cv::Point3f base, std::vector<cv::Point3f> rotation) {
   cv::Point3f result = {(base.x*rotation[0].x + base.y*rotation[0].y + base.z*rotation[0].z), (base.x*rotation[1].x + base.y*rotation[1].y + base.z*rotation[1].z), (base.x*rotation[2].x + base.y*rotation[2].y + base.z*rotation[2].z)};
   return result;
 }
+
+std::vector<cv::Point3f> tesseract[] = {
+  // outer cube
+  {{-1, -1, 1}, {1, -1, 1}},
+  {{1, -1, 1}, {1, 1, 1}},
+  {{1, 1, 1}, {-1, 1, 1}},
+  {{-1, 1, 1}, {-1, -1, 1}},
+  {{-1, -1, 1}, {-1, -1, -1}},
+  {{-1, 1, 1}, {-1, 1, -1}},
+  {{1, 1, 1}, {1, 1, -1}},
+  {{1, -1, 1}, {1, -1, -1}},
+  {{-1, -1, -1}, {1, -1, -1}},
+  {{1, -1, -1}, {1, 1, -1}},
+  {{1, 1, -1}, {-1, 1, -1}},
+  {{-1, 1, -1}, {-1, -1, -1}},
+  // inner cube
+  {{-0.5, -0.5, -0.5}, {0.5, -0.5, -0.5}},
+  {{0.5, -0.5, -0.5}, {0.5, 0.5, -0.5}},
+  {{0.5, 0.5, -0.5}, {-0.5, 0.5, -0.5}},
+  {{-0.5, 0.5, -0.5}, {-0.5, -0.5, -0.5}},
+  {{-0.5, -0.5, -0.5}, {-0.5, -0.5, 0.5}},
+  {{-0.5, 0.5, -0.5}, {-0.5, 0.5, 0.5}},
+  {{0.5, 0.5, -0.5}, {0.5, 0.5, 0.5}},
+  {{0.5, -0.5, -0.5}, {0.5, -0.5, 0.5}},
+  {{-0.5, -0.5, 0.5}, {0.5, -0.5, 0.5}},
+  {{0.5, -0.5, 0.5}, {0.5, 0.5, 0.5}},
+  {{0.5, 0.5, 0.5}, {-0.5, 0.5, 0.5}},
+  {{-0.5, 0.5, 0.5}, {-0.5, -0.5, 0.5}},
+  // connecting lines
+  {{-1, -1, 1}, {-0.5, -0.5, 0.5}},
+  {{1, -1, 1}, {0.5, -0.5, 0.5}},
+  {{1, 1, 1}, {0.5, 0.5, 0.5}},
+  {{-1, 1, 1}, {-0.5, 0.5, 0.5}},
+  {{-1, -1, -1}, {-0.5, -0.5, -0.5}},
+  {{1, -1, -1}, {0.5, -0.5, -0.5}},
+  {{1, 1, -1}, {0.5, 0.5, -0.5}},
+  {{-1, 1, -1}, {-0.5, 0.5, -0.5}}
+};
+std::vector<cv::Point2f> line2d[32];
 
 int main(int argc, char** argv) {
 
@@ -99,13 +140,27 @@ int main(int argc, char** argv) {
       std::vector<cv::Point3f> objectPoints = {cv::Point3f(-1, -1, 0), cv::Point3f(-1, 1, 0), cv::Point3f(1, 1, 0), cv::Point3f(1, -1, 0)};
       cv::Mat objectPointsMat(objectPoints);
 
-      std::cout << "objectPointsMat: " << objectPointsMat.rows << ", " << objectPointsMat.cols << '\n';
-      std::cout << "squares[0]: " << squares[0] << '\n';
+      // std::cout << "objectPointsMat: " << objectPointsMat.rows << ", " << objectPointsMat.cols << '\n';
+      // std::cout << "squares[0]: " << squares[0] << '\n';
 
       cv::Mat rvec, tvec;
       cv::solvePnP(objectPointsMat, squares[0], intrinsics, distortion, rvec, tvec);
 
-      std::cout << "rvec: " << rvec << '\n' << "tvec: " << tvec << '\n';
+      // std::cout << "rvec: " << rvec << '\n' << "tvec: " << tvec << '\n';
+      std::cout << "rotation: " << (int)(r*180/PI)%180 << '\n';
+
+      std::vector<cv::Point3f> rotx = {
+        {1, 0, 0},
+        {0, (float)cos(r), (float)-1*sin(r)},
+        {0, (float)sin(r), (float)cos(r)}
+      };
+
+      std::vector<cv::Point3f> roty = {
+        {(float)cos(r), 0, (float)sin(r)},
+        {0, 1, 0},
+        {(float)-1*sin(r), 0, (float)cos(r), }
+      };
+
       std::vector<cv::Point3f> rotz = {
         {(float)cos(r), (float)-1*sin(r), 0},
         {(float)sin(r), (float)cos(r), 0},
@@ -113,48 +168,20 @@ int main(int argc, char** argv) {
       };
 
       drawQuad(frame, squares[0], green);
-      // {{0,0,0}, {1,0,0}, {1,1,0}, {0,1,0}, {0,0,0}};
-      std::vector<cv::Point3f> tesseract[] = {
-        // outer cube
-        {{-1, -1, -1}, {1, -1, -1}},
-        {{1, -1, -1}, {1, 1, -1}},
-        {{1, 1, -1}, {-1, 1, -1}},
-        {{-1, 1, -1}, {-1, -1, -1}},
-        {{-1, -1, -1}, {-1, -1, -3}},
-        {{-1, 1, -1}, {-1, 1, -3}},
-        {{1, 1, -1}, {1, 1, -3}},
-        {{1, -1, -1}, {1, -1, -3}},
-        {{-1, -1, -3}, {1, -1, -3}},
-        {{1, -1, -3}, {1, 1, -3}},
-        {{1, 1, -3}, {-1, 1, -3}},
-        {{-1, 1, -3}, {-1, -1, -3}},
-        // inner cube
-        {{-0.5, -0.5, -1.5}, {0.5, -0.5, -1.5}},
-        {{0.5, -0.5, -1.5}, {0.5, 0.5, -1.5}},
-        {{0.5, 0.5, -1.5}, {-0.5, 0.5, -1.5}},
-        {{-0.5, 0.5, -1.5}, {-0.5, -0.5, -1.5}},
-        {{-0.5, -0.5, -1.5}, {-0.5, -0.5, -2.5}},
-        {{-0.5, 0.5, -1.5}, {-0.5, 0.5, -2.5}},
-        {{0.5, 0.5, -1.5}, {0.5, 0.5, -2.5}},
-        {{0.5, -0.5, -1.5}, {0.5, -0.5, -2.5}},
-        {{-0.5, -0.5, -2.5}, {0.5, -0.5, -2.5}},
-        {{0.5, -0.5, -2.5}, {0.5, 0.5, -2.5}},
-        {{0.5, 0.5, -2.5}, {-0.5, 0.5, -2.5}},
-        {{-0.5, 0.5, -2.5}, {-0.5, -0.5, -2.5}},
-        // connecting lines
-        {{-1, -1, -1}, {-0.5, -0.5, -1.5}},
-        {{1, -1, -1}, {0.5, -0.5, -1.5}},
-        {{1, 1, -1}, {0.5, 0.5, -1.5}},
-        {{-1, 1, -1}, {-0.5, 0.5, -1.5}},
-        {{-1, -1, -3}, {-0.5, -0.5, -2.5}},
-        {{1, -1, -3}, {0.5, -0.5, -2.5}},
-        {{1, 1, -3}, {0.5, 0.5, -2.5}},
-        {{-1, 1, -3}, {-0.5, 0.5, -2.5}}
-      };
-      std::vector<cv::Point2f> line2d[32];
 
       for(int l = 0; l < 32; l++) {
-        cv::projectPoints((std::vector<cv::Point3f>){rotate(tesseract[l][0], rotz), rotate(tesseract[l][1], rotz)}, rvec, tvec, intrinsics, distortion, line2d[l]);
+        // cv::Point3f r1 = rotate(rotate(rotate(tesseract[l][0], rotx), roty), rotz);
+        // cv::Point3f r2 = rotate(rotate(rotate(tesseract[l][1], rotx), roty), rotz);
+        std::vector<cv::Point3f> sq = {
+          (cv::Point3f)rotate(rotate(rotate(tesseract[l][0], rotx), roty), rotz),
+          (cv::Point3f)rotate(rotate(rotate(tesseract[l][1], rotx), roty), rotz)
+        };
+        cv::projectPoints(
+          (std::vector<cv::Point3f>){
+            (cv::Point3f){sq[0].x,sq[0].y,sq[0].z - 2},
+            (cv::Point3f){sq[1].x,sq[1].y,sq[1].z - 2}
+          },
+          rvec, tvec, intrinsics, distortion, line2d[l]);
         cv::line(frame, line2d[l][0], line2d[l][1], blue);
       }
     }
